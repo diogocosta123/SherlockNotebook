@@ -2,6 +2,12 @@
 <resources>
 
     <string name="app_name">Sherlock Notebook</string>
-    <string name="title_activity_maps">Map</string>
+    <string name="title_activity_maps">Sherlock Notebook</string>
+    <string name="action_finish">Solve the Crime!</string>
+    <string name="action_notebook">Notebook</string>
+    <string name="title_activity_notebook_activity">notebook_activity</string>
+    <string name="action_settings">Settings</string>
+    <string name="title_activity_notebook">Notebook</string>
+    <string name="hello_world">Hello world!</string>
 
 </resources>

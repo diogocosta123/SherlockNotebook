@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:sherlock="http://schemas.android.com/apk/res-auto">
+
+    <item android:id="@+id/action_finish"
+        android:title="@string/action_finish"
+        sherlock:showAsAction="ifRoom"/>
+
+    <item android:id="@+id/action_notebook"
+        android:title="@string/action_notebook"
+        sherlock:showAsAction="ifRoom"/>
+</menu>
