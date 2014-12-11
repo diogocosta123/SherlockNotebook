@@ -1,13 +1,20 @@
 package com.example.diogo.sherlocknotebook;
 
+import android.content.Context;
 import android.content.Intent;
 
+import android.location.Location;
+import android.location.LocationManager;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.nfc.Tag;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 
@@ -17,11 +24,22 @@ import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.CameraUpdateFactory;
 
 import android.support.v7.app.ActionBarActivity;
+import android.util.Log;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.widget.Toast;
 
 public class MapsActivity extends ActionBarActivity {
+
+    public static String TAG = "com.example.diogo.sherlocknotebook";
+
+    //toasts
+    CharSequence internetText = "Please turn on your Wi-Fi/Data connection.";
+    CharSequence gpsText = "Please turn on your GPS connection.";
+    CharSequence boundText = "Outside of map boundaries.";
+    int duration = Toast.LENGTH_LONG;
 
     //fragment activity
     private GoogleMap mMap; // Might be null if Google Play services APK is not available.
@@ -37,6 +55,9 @@ public class MapsActivity extends ActionBarActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         getSupportActionBar().setDisplayHomeAsUpEnabled(false);
+
+        getToasts();
+
         setContentView(R.layout.activity_maps);
         setUpMapIfNeeded();
     }
@@ -68,7 +89,10 @@ public class MapsActivity extends ActionBarActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        getToasts();
         setUpMapIfNeeded();
+
+
     }
 
     /**
@@ -111,7 +135,6 @@ public class MapsActivity extends ActionBarActivity {
         double gardenLatitude = 41.145741;
         double gardenLongitude = -8.616345;
 
-
         //Overlay Map
         GroundOverlayOptions newarkMap = new GroundOverlayOptions()
                 .image(BitmapDescriptorFactory.fromResource(R.drawable.map_final))
@@ -122,6 +145,17 @@ public class MapsActivity extends ActionBarActivity {
 
         // Show user location
         mMap.setMyLocationEnabled(true);
+
+        //Check boundaries
+        Location centerLocation = new Location("Jardim");
+
+        centerLocation.setLatitude(gardenLatitude);
+        centerLocation.setLongitude(gardenLongitude);
+
+
+        //if (mMap.getMyLocation().distanceTo(centerLocation)>2500)
+            //getMapToast();
+
 
         // Create and add marker
         MarkerOptions marker = new MarkerOptions().position
@@ -140,5 +174,51 @@ public class MapsActivity extends ActionBarActivity {
         mMap.getUiSettings().setZoomControlsEnabled(false);
         // hide compass
         mMap.getUiSettings().setCompassEnabled(false);
+    }
+
+    private boolean isNetWorkAvailable(){
+        ConnectivityManager connectivityManager
+                = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+    }
+
+    private boolean isGPSAvailable(){
+
+        LocationManager mlocManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        return  mlocManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+
+    }
+
+    private void getToasts(){
+        //Toasts
+        Context context = getApplicationContext();
+
+        Toast toastNet = Toast.makeText(context,internetText, duration);
+        Toast toastGps = Toast.makeText(context,gpsText, duration);
+
+        toastNet.setGravity(Gravity.CENTER, 0, 0);
+        toastGps.setGravity(Gravity.CENTER, 0, 0);
+
+        //Checks if required services are available
+        if(isNetWorkAvailable()==true)
+            Log.v(TAG,"Internet ok");
+        else {
+            toastNet.show();
+            Log.v(TAG, "Internet fail");}
+        if(isGPSAvailable()==true)
+            Log.v(TAG,"GPS ok");
+        else{
+            toastGps.show();
+            Log.v(TAG, "GPS fail");}
+
+    }
+
+    private void getMapToast() {
+        Context context = getApplicationContext();
+        Toast toast = Toast.makeText(context,boundText, duration);
+        toast.setGravity(Gravity.CENTER,0,0);
+        toast.show();
+        Log.v(TAG,"Out of bounds");
     }
 }
