@@ -7,16 +7,12 @@ import android.location.Location;
 import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.nfc.Tag;
-import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MarkerOptions;
-
 
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.GroundOverlayOptions;
@@ -38,7 +34,7 @@ public class MapsActivity extends ActionBarActivity {
     //toasts
     CharSequence internetText = "Please turn on your Wi-Fi/Data connection.";
     CharSequence gpsText = "Please turn on your GPS connection.";
-    CharSequence boundText = "Outside of map boundaries.";
+    CharSequence boundText = "Warning: Outside of Porto's historical center.";
     int duration = Toast.LENGTH_LONG;
 
     //fragment activity
@@ -50,6 +46,7 @@ public class MapsActivity extends ActionBarActivity {
      new LatLng(41.147086, -8.606802)); // SW bound**/
 
     private LatLng lastCenter = new LatLng(41.147779, -8.614559); // Praça guilherme gomes ferreira
+    private LocationManager locationManager = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,6 +58,7 @@ public class MapsActivity extends ActionBarActivity {
         setContentView(R.layout.activity_maps);
         setUpMapIfNeeded();
     }
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -91,7 +89,6 @@ public class MapsActivity extends ActionBarActivity {
         super.onResume();
         getToasts();
         setUpMapIfNeeded();
-
 
     }
 
@@ -135,6 +132,9 @@ public class MapsActivity extends ActionBarActivity {
         double gardenLatitude = 41.145741;
         double gardenLongitude = -8.616345;
 
+        double currentLatitude = 0;
+        double currentLongitude = 0;
+
         //Overlay Map
         GroundOverlayOptions newarkMap = new GroundOverlayOptions()
                 .image(BitmapDescriptorFactory.fromResource(R.drawable.map_final))
@@ -146,16 +146,33 @@ public class MapsActivity extends ActionBarActivity {
         // Show user location
         mMap.setMyLocationEnabled(true);
 
-        //Check boundaries
+        // Map center
         Location centerLocation = new Location("Jardim");
 
         centerLocation.setLatitude(gardenLatitude);
         centerLocation.setLongitude(gardenLongitude);
 
+        // Get last location
+        locationManager = (LocationManager) this.getSystemService(LOCATION_SERVICE);
 
-        //if (mMap.getMyLocation().distanceTo(centerLocation)>2500)
-            //getMapToast();
+        Location lastKnownLocation = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER); // Force use of Network provider
 
+        if (lastKnownLocation != null) {
+            currentLatitude  = lastKnownLocation.getLatitude();
+            currentLongitude = lastKnownLocation.getLongitude();
+            Log.v(TAG, "Lat:"+currentLatitude+" Lon: "+currentLongitude);
+        }
+        else
+            Log.e(TAG, "Error: Unable to get location manager");
+
+        //Check if device is inside map boundaries
+        if(getDistance(centerLocation.getLatitude(),centerLocation.getLongitude(),currentLatitude,currentLongitude)>2500) {
+            getMapToast();
+        }
+        else
+        {
+            Log.v(TAG,"Inside map boundaries");
+        }
 
         // Create and add marker
         MarkerOptions marker = new MarkerOptions().position
@@ -174,6 +191,17 @@ public class MapsActivity extends ActionBarActivity {
         mMap.getUiSettings().setZoomControlsEnabled(false);
         // hide compass
         mMap.getUiSettings().setCompassEnabled(false);
+    }
+
+    public double getDistance(double latitude, double longitude, double latitudePto, double longitudePto){
+        double distanceLon, finalDistance, distanceLat, a, distance;
+        distanceLon = longitudePto - longitude;
+        distanceLat = latitudePto - latitude;
+        a = Math.pow(Math.sin(distanceLat/2),2) + Math.cos(latitude) * Math.cos(latitudePto) * Math.pow(Math.sin(distanceLon/2),2);
+        distance = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        finalDistance = 6378140 * distance;
+        Log.v(TAG,"Distance to center: "+ finalDistance);
+        return finalDistance ; /* 6378140 is the radius of the Earth in meters*/
     }
 
     private boolean isNetWorkAvailable(){
@@ -205,13 +233,12 @@ public class MapsActivity extends ActionBarActivity {
             Log.v(TAG,"Internet ok");
         else {
             toastNet.show();
-            Log.v(TAG, "Internet fail");}
+            Log.e(TAG, "Internet fail");}
         if(isGPSAvailable()==true)
             Log.v(TAG,"GPS ok");
         else{
             toastGps.show();
-            Log.v(TAG, "GPS fail");}
-
+            Log.e(TAG, "GPS fail");}
     }
 
     private void getMapToast() {
@@ -219,6 +246,6 @@ public class MapsActivity extends ActionBarActivity {
         Toast toast = Toast.makeText(context,boundText, duration);
         toast.setGravity(Gravity.CENTER,0,0);
         toast.show();
-        Log.v(TAG,"Out of bounds");
+        Log.e(TAG,"Out of bounds");
     }
 }
